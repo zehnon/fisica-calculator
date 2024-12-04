@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Dispersión de Partículas Alfa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f8ff;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9f7df;
+            border: 1px solid #d4edda;
+            border-radius: 5px;
+        }
+        .file-buttons {
+            margin-top: 20px;
+        }
+        canvas {
+            width: 100%;
+            height: 400px;
+            background-color: #eaeaea;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculadora de Dispersión Alfa</h1>
+    <div class="container">
+        <form id="alphaCalculator">
+            <div class="input-group">
+                <label for="z1">Carga del núcleo (Z₁):</label>
+                <input type="number" id="z1" placeholder="Introduce la carga Z₁" required>
+            </div>
+            <div class="input-group">
+                <label for="z2">Carga de la partícula alfa (Z₂):</label>
+                <input type="number" id="z2" placeholder="Introduce la carga Z₂" required>
+            </div>
+            <div class="input-group">
+                <label for="kineticEnergy">Energía cinética (en MeV):</label>
+                <input type="number" id="kineticEnergy" placeholder="Introduce la energía cinética" required>
+            </div>
+            <div class="input-group">
+                <label for="impactParameter">Parámetro de impacto (b en fm):</label>
+                <input type="number" id="impactParameter" placeholder="Introduce b" required>
+            </div>
+            <button type="button" onclick="calculateScattering()">Calcular ángulo de dispersión</button>
+        </form>
+        <div id="result" class="result" style="display: none;">
+            <strong>Resultado:</strong>
+            <p id="resultText"></p>
+        </div>
+        <canvas id="scatteringCanvas" style="display: none;"></canvas>
+
+        <div class="file-buttons">
+            <button onclick="viewWordFile('https://docs.google.com/document/d/e/2PACX-1vQwTaMF1VMT1zAcbgNinkboKYYO9CXEuZHmIkYPviiu5LZN52BWt-JrrdJwiZKxdw/pub')">Ver Documento</button>
+            <button onclick="viewWordFile('https://docs.google.com/document/d/e/2PACX-1vT1zMluGn6YUCaejc4BB8bygRMjlcFCjNAIzp_kjEkXl0rTvNXyC8hNY8nF44LW0Q/pub')">Ver Manual De Usuario</button>
+        </div>
+    </div>
+
+    <script>
+        function calculateScattering() {
+            const k = 1.44;
+            const Z1 = parseFloat(document.getElementById("z1").value);
+            const Z2 = parseFloat(document.getElementById("z2").value);
+            const E = parseFloat(document.getElementById("kineticEnergy").value);
+            const b = parseFloat(document.getElementById("impactParameter").value);
+
+            if (isNaN(Z1) || isNaN(Z2) || isNaN(E) || isNaN(b)) {
+                alert("Por favor, introduce todos los valores correctamente.");
+                return;
+            }
+
+            const theta = 2 * Math.atan((Z1 * Z2 * k) / (E * b));
+            document.getElementById("result").style.display = "block";
+            document.getElementById("resultText").innerText = `El ángulo de dispersión es ${theta.toFixed(4)} radianes (${(theta * (180 / Math.PI)).toFixed(2)} grados).`;
+
+            showScatteringAnimation(theta);
+        }
+
+        function showScatteringAnimation(theta) {
+            const canvas = document.getElementById("scatteringCanvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = 600;
+            canvas.height = 400;
+            canvas.style.display = "block";
+
+            const nucleusX = canvas.width / 2;
+            const nucleusY = canvas.height / 2;
+            const particleRadius = 10;
+            let speed = 2;
+            let angle = Math.PI / 2;
+
+            let particleX = nucleusX + 100 * Math.cos(angle);
+            let particleY = nucleusY + 100 * Math.sin(angle);
+
+            function drawNucleus() {
+                ctx.beginPath();
+                ctx.arc(nucleusX, nucleusY, 30, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ff6347';
+                ctx.fill();
+            }
+
+            function drawParticle(x, y) {
+                ctx.beginPath();
+                ctx.arc(x, y, particleRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#00ff00';
+                ctx.fill();
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                drawNucleus();
+                drawParticle(particleX, particleY);
+
+                angle += theta / 50;
+                particleX = nucleusX + (100 + speed) * Math.cos(angle);
+                particleY = nucleusY + (100 + speed) * Math.sin(angle);
+
+                if (speed < 15) {
+                    speed += 0.1;
+                }
+
+                if (angle < Math.PI * 2) {
+                    requestAnimationFrame(animate);
+                }
+            }
+
+            animate();
+        }
+
+        function viewWordFile(filePath) {
+            window.open(filePath, '_blank');
+        }
+    </script>
+</body>
+</html>
